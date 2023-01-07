@@ -1,4 +1,3 @@
-import fs from "fs";
 import rawInputs from "./rawInputs.js";
 
 const inputsArray = rawInputs.split("\n");
@@ -50,110 +49,56 @@ function resolveHeadJourney() {
 
 resolveHeadJourney();
 
-// const tailJourney = [{ x: 0, y: 0 }];
-
 function resolveKnotMovement(headX, headY, previousTailX, previousTailY, knotJourney) {
   const isTooFar = Math.abs(headX - previousTailX) > 1 || Math.abs(headY - previousTailY) > 1;
-  const isStraight = headX === previousTailX || headY === previousTailY;
-  const xTooFar = Math.abs(headX - previousTailX) > 1;
-  const toTheRight = headX > previousTailX;
-  const toTheTop = headY > previousTailY;
-
   if (isTooFar) {
-    if (isStraight) {
-      if (xTooFar) {
-        if (toTheRight) {
-          return knotJourney.push({ x: previousTailX + 1, y: previousTailY });
-        } else {
-          return knotJourney.push({ x: previousTailX - 1, y: previousTailY });
-        }
-      } else { // y too far
-        if (toTheTop) {
-          return knotJourney.push({ x: previousTailX, y: previousTailY + 1 });
-        } else {
-          return knotJourney.push({ x: previousTailX, y: previousTailY - 1 });
-        }
-      }
-    } else { // is diagonal
-      if (xTooFar) {
-        if (toTheRight) {
-          return knotJourney.push({ x: previousTailX + 1, y: headY });
-        } else {
-          return knotJourney.push({ x: previousTailX - 1, y: headY });
-        }
-      } else { // y too far
-        if (toTheTop) {
-          return knotJourney.push({ x: headX, y: previousTailY + 1 });
-        } else {
-          return knotJourney.push({ x: headX, y: previousTailY - 1 });
-        }
-      }
+    let x = previousTailX;
+    let y = previousTailY;
+
+    if (headX > previousTailX) {
+      x = previousTailX + 1;
+    } else if (headX < previousTailX) {
+      x = previousTailX - 1;
     }
+    if (headY > previousTailY) {
+      y = previousTailY + 1;
+    } else if (headY < previousTailY) {
+      y = previousTailY - 1;
+    }
+    knotJourney.push({ x, y });
   } else {
     return knotJourney.push({ x: previousTailX, y: previousTailY });
   }
 }
 
+const knotJourney = [];
+
 function resolveKnotsJourney() {
-  const knots = {
-  k1: [{ x: 0, y: 0 }],
-  k2: [{ x: 0, y: 0 }],
-  k3: [{ x: 0, y: 0 }],
-  k4: [{ x: 0, y: 0 }],
-  k5: [{ x: 0, y: 0 }],
-  k6: [{ x: 0, y: 0 }],
-  k7: [{ x: 0, y: 0 }],
-  k8: [{ x: 0, y: 0 }],
-  k9: [{ x: 0, y: 0 }],
-}
-
-Object.keys(knots).forEach((knot, i) => {
-  if (i === 0) {
-    headJourney.forEach((headPosition, index) => {
-      if (index === 0) return;
-      const previousTailPosition = knots[knot][knots[knot].length - 1];
-      resolveKnotMovement(
-        headPosition.x,
-        headPosition.y,
-        previousTailPosition.x,
-        previousTailPosition.y,
-        knots[knot]
-      );
-    });
-  } else {
-    knots[Object.keys(knots)[i - 1]].forEach((headPosition, index) => {
-      if (index === 0) return;
-      const previousTailPosition = knots[knot][knots[knot].length - 1];
-      resolveKnotMovement(
-        headPosition.x,
-        headPosition.y,
-        previousTailPosition.x,
-        previousTailPosition.y,
-        knots[knot]
-      );
-    });
+  for (let i = 0; i < 10; i++) {
+    if (i === 0) {
+      knotJourney.push(headJourney);
+    } else {
+      const previousKnotJourney = knotJourney[i - 1];
+      const currentKnotJourney = [{ x: 0, y: 0}];
+      for (let j = 0; j < previousKnotJourney.length; j++) {
+        if (j !== 0) {
+          const { x: headX, y: headY } = previousKnotJourney[j];
+          const { x: previousTailX, y: previousTailY } = currentKnotJourney[j - 1];
+          resolveKnotMovement(headX, headY, previousTailX, previousTailY, currentKnotJourney);
+        }
+      }
+      knotJourney.push(currentKnotJourney);
+    }
   }
-});
-  return knots;
 }
 
-const tailJourney = resolveKnotsJourney().k9;
-
+resolveKnotsJourney();
+console.log(knotJourney);
 
 const uniqueTailPositions = new Set();
-tailJourney.forEach((position) => {
+knotJourney.at(-1).forEach((position) => {
   uniqueTailPositions.add(`${position.x}-${position.y}`);
 });
 
 console.log(uniqueTailPositions.size);
-// 2585, your answer is too high.
-
-// const journey = headJourney.reduce((acc, curr, i) => {
-//   acc.push({
-//     head: curr,
-//     tail: tailJourney[i]
-//   });
-//   return acc;
-// }, []);
-
-// fs.writeFileSync("./journey.json", JSON.stringify(journey, null, 2));
+// 2522, that's the right answer!
